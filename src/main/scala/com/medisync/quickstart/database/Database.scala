@@ -25,7 +25,11 @@ object Database {
     def initialize[F[_]: Async](transactor: HikariTransactor[F]): F[Unit] = 
         transactor.configure{ dataSource => 
             Async[F].blocking {
-                val flyway = Flyway.configure().dataSource(dataSource).load()
+                val flyway = Flyway.configure()
+                    .validateMigrationNaming(true)
+                    .locations("classpath:db_migrations")
+                    .dataSource(dataSource)
+                    .load()
                 flyway.migrate()
                 ()
             } 
