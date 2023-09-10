@@ -20,37 +20,27 @@ object QuickstartServer:
 
     for {
 
-
+      config <- Configuration.load[F]()
       client <- EmberClientBuilder.default[F].build
       helloWorldAlg = HelloWorld.impl[F]
       jokeAlg = Jokes.impl[F](client)
 
-      config <- Configuration.load[F]() map {
-        case c: ServiceConf => c
+      db <- Database.transactor(config.database) map { db =>
+        Database.initialize(db); db
       }
 
-      _ <- Resource.eval(Async[F].blocking(println(config)))
-      db <- Database.transactor(config.database)
-      // _ <- Resource.eval(sql"select name from actors".query[String].to[List].transact[F](db)).map(println(_))
-      _ <- Resource.eval(Database.initialize(db))
-      
-      apService = AppointmentService.impl(db,client)
+      apService = AppointmentService.impl(db, client)
 
-      // Combine Service Routes into an HttpApp.
-      // Can also be done via a Router if you
-      // want to extract a segments not checked
-      // in the underlying routes.
       httpApp = (
-        // QuickstartRoutes.jokeRoutes[F](jokeAlg)
-        QuickstartRoutes.helloWorldRoutes[F](helloWorldAlg) <+>
         AppointmentController[F](apService)
       ).orNotFound
 
       // With Middlewares in place
       finalHttpApp = Logger.httpApp(true, true)(httpApp)
 
-      _ <- 
-        EmberServerBuilder.default[F]
+      _ <-
+        EmberServerBuilder
+          .default[F]
           .withHost(ipv4"0.0.0.0")
           .withPort(config.server.port)
           .withHttpApp(finalHttpApp)

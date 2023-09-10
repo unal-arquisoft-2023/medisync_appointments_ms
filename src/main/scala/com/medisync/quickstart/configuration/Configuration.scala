@@ -10,21 +10,29 @@ import pureconfig.module.catseffect.loadF
 
 object Configuration {
 
-    implicit val myPortReader: ConfigReader[Port] = ConfigReader.fromString[Port] {
-        ConvertHelpers.optF(Port.fromString(_))
+  implicit val myPortReader: ConfigReader[Port] =
+    ConfigReader.fromString[Port] {
+      ConvertHelpers.optF(Port.fromString(_))
     }
 
-    sealed trait Config derives ConfigReader
-    case class ServiceConf(server: ServerConfig, database: DatabaseConfig) extends Config
-    sealed trait SubConfig derives ConfigReader
-    case class ServerConfig(port: Port) extends SubConfig
-    case class DatabaseConfig(driver: String, url: String, user: String, password: String, threadPoolSize: Int) extends SubConfig
+  sealed trait Config derives ConfigReader
+  case class ServiceConf(server: ServerConfig, database: DatabaseConfig)
+      extends Config
+  sealed trait SubConfig derives ConfigReader
+  case class ServerConfig(port: Port) extends SubConfig
+  case class DatabaseConfig(
+      driver: String,
+      url: String,
+      user: String,
+      password: String,
+      threadPoolSize: Int
+  ) extends SubConfig
 
-
-    def load[F[_]: Sync](configFile: String = "application.conf"): Resource[F, Config] =
-        Resource.eval(loadF[F,Config](  ConfigSource.fromConfig(ConfigFactory.load(configFile))))
-
-
+  def load[F[_]: Sync](
+      configFile: String = "application.conf"
+  ): Resource[F, ServiceConf] =
+    Resource.eval(
+      loadF[F, Config](ConfigSource.fromConfig(ConfigFactory.load(configFile)))
+    ) map { case c: ServiceConf => c }
 
 }
-
