@@ -34,14 +34,16 @@ object QuickstartServer:
       // _ <- Resource.eval(sql"select name from actors".query[String].to[List].transact[F](db)).map(println(_))
       _ <- Resource.eval(Database.initialize(db))
       
+      apService = AppointmentService.impl(db,client)
 
       // Combine Service Routes into an HttpApp.
       // Can also be done via a Router if you
       // want to extract a segments not checked
       // in the underlying routes.
       httpApp = (
+        // QuickstartRoutes.jokeRoutes[F](jokeAlg)
         QuickstartRoutes.helloWorldRoutes[F](helloWorldAlg) <+>
-        QuickstartRoutes.jokeRoutes[F](jokeAlg)
+        AppointmentController[F](apService)
       ).orNotFound
 
       // With Middlewares in place

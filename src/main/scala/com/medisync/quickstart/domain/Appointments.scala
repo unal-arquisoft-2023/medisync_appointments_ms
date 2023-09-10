@@ -1,3 +1,4 @@
+package com.medisync.quickstart
 import java.time.Instant
 
 object Appointments {
@@ -10,5 +11,6 @@ object Appointments {
         medicalRecordId: Int,
         dateOfScheduling: Instant 
     )
+
 
 }
