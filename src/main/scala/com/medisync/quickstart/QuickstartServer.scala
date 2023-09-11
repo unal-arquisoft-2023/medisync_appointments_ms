@@ -13,6 +13,7 @@ import com.medisync.quickstart.Configuration.ServiceConf
 
 import doobie._
 import doobie.implicits._
+import com.medisync.quickstart.outside.TestGateway
 
 object QuickstartServer:
 
@@ -24,12 +25,14 @@ object QuickstartServer:
       client <- EmberClientBuilder.default[F].build
       helloWorldAlg = HelloWorld.impl[F]
       jokeAlg = Jokes.impl[F](client)
+      gw = TestGateway.impl[F](client)
 
       db <- Database.transactor(config.database) map { db =>
         Database.initialize(db); db
       }
 
-      apService = AppointmentService.impl(db, client)
+
+      apService = AppointmentService.impl(db, gw)
 
       httpApp = (
         AppointmentController[F](apService)

@@ -6,6 +6,8 @@ val MunitCatsEffectVersion = "1.0.6"
 val PureconfigVersion = "0.17.4"
 val DoobieVersion = "1.0.0-RC4"
 val FlywayVersion = "9.22.0"
+val MonixNewtypesVersion = "0.2.3"
+val CirceVersion = "0.14.5"
 
 lazy val root = (project in file("."))
   .settings(
@@ -30,8 +32,13 @@ lazy val root = (project in file("."))
       "org.tpolecat"%% "doobie-specs2" % DoobieVersion,
       "org.tpolecat"%% "doobie-hikari" % DoobieVersion,
 
+      "io.circe" %% "circe-generic" % CirceVersion,
+      "io.circe" %% "circe-literal" % CirceVersion,
 
-      "org.flywaydb" % "flyway-core" % FlywayVersion
+      "org.flywaydb" % "flyway-core" % FlywayVersion,
+
+      "io.monix" %% "newtypes-core" % MonixNewtypesVersion,
+      "io.monix" %% "newtypes-circe-v0-14" % MonixNewtypesVersion,
     ),
     testFrameworks += new TestFramework("munit.Framework")
   )
