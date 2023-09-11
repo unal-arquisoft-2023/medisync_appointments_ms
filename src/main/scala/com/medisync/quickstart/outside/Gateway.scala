@@ -13,5 +13,5 @@ trait Gateway[F[_]: Concurrent] {
   def deleteMedicaRecord(medRecId: MedicalRecordId): F[Boolean]
 
   def createNotification(appointment: Appointment): F[Boolean]
-  def deleteNotification(appointment: Appointment): F[Boolean]
+  def deleteNotification(appointmentId: AppointmentId): F[Boolean]
 }

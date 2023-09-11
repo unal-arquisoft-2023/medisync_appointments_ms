@@ -5,6 +5,7 @@ import cats.effect.Concurrent
 import cats.effect.implicits._
 import java.time.Instant
 import com.medisync.quickstart.Appointments._
+import scala.util.Random
 
 
 object TestGateway:
@@ -20,7 +21,7 @@ object TestGateway:
             Concurrent[F].pure(true)
 
         def createNotification(appointment: Appointment): F[Boolean] = 
-            Concurrent[F].pure(true)
+            Concurrent[F].pure(math.random() < 0.5)
         
-        def deleteNotification(appointment: Appointment): F[Boolean] = 
-            Concurrent[F].pure(true)
+        def deleteNotification(appointmentId: AppointmentId): F[Boolean] = 
+            Concurrent[F].pure(math.random() < 0.5)

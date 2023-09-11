@@ -2,9 +2,9 @@ package com.medisync.quickstart
 
 import java.time.Instant
 import Appointments.Appointment
-import cats.effect.Concurrent
+import cats.effect.Async
 import cats.implicits._
-import io.circe.{Encoder,Decoder}
+import io.circe.{Encoder, Decoder}
 import org.http4s._
 import org.http4s.implicits._
 import org.http4s.client.Client
@@ -23,22 +23,103 @@ import NewtypesDoobie._
 import com.medisync.quickstart.Doctors._
 
 trait AppointmentService[F[_]]:
-    def create(patId: PatientId, docId: DoctorId, date: Instant): F[AppointmentId]
+  def create(patId: PatientId, docId: DoctorId, date: Instant): F[AppointmentId]
+  def delete(appId: AppointmentId): F[Boolean]
+  def attend(appId: AppointmentId): F[Boolean]
+  def findOne(appId: AppointmentId): F[Option[Appointment]]
+  def findAllByPatient(patId: PatientId): F[List[Appointment]]
+  def findAllByDoctor(docId: DoctorId): F[List[Appointment]]
+
+  def updateMissed: F[Int]
 
 object AppointmentService:
-    def apply[F[_]](implicit ev: AppointmentService[F]): AppointmentService[F] = ev
+  def apply[F[_]](implicit ev: AppointmentService[F]): AppointmentService[F] =
+    ev
 
+  def impl[F[_]: Async](T: Transactor[F], gw: Gateway[F]) =
+    new AppointmentService[F]:
+      val dsl = new Http4sClientDsl[F] {}
+      import dsl._
+      def create(
+          patId: PatientId,
+          docId: DoctorId,
+          date: Instant
+      ): F[AppointmentId] =
+        for {
+          medRecId <- gw.createMedicalRecord
+          insert = sql"INSERT INTO appointment (doctor_id,patient_id,medical_record_id,date,status,notification_status) " ++
+            sql"VALUES ($docId,$patId,$medRecId,$date,${AppointmentStatus.Pending},${NotificationStatus.ToNotify})"
 
-    def impl[F[_]: Concurrent](T: Transactor[F], C: Gateway[F]) = new AppointmentService[F]: 
-        val dsl = new Http4sClientDsl[F]{}
-        import dsl._
-        def create(patId: PatientId, docId: DoctorId, date: Instant): F[AppointmentId] = 
-            for {
-                medRecId <- C.createMedicalRecord
-                apId <- sql"INSERT INTO appointment (doctor_id,patient_id,medical_record_id,date) VALUES ($docId,$patId,$medRecId,$date)"
-                            .update 
-                            .withUniqueGeneratedKeys[AppointmentId]("id")
-                            .transact(T)
-            } yield apId
+          app <- insert.update
+            .withUniqueGeneratedKeys[Appointment](
+              "id",
+              "date",
+              "doctor_id",
+              "patient_id",
+              "medical_record_id",
+              "date_of_scheduling",
+              "status",
+              "notification_status"
+            )
+            .transact(T)
 
+          notified <- gw.createNotification(app)
 
+          notifStatus =
+            if notified then NotificationStatus.Notified
+            else NotificationStatus.ToNotify
+
+          update =
+            sql"UPDATE appointment SET notification_status = ${notifStatus} WHERE id = ${app.id}"
+          _ <- update.update.run.transact(T)
+        } yield app.id
+
+      def delete(appId: AppointmentId): F[Boolean] =
+        for {
+          deleted <- gw.deleteNotification(appId)
+
+          update =
+            if deleted then
+              sql"UPDATE appointment SET status = ${AppointmentStatus.Canceled} WHERE id = ${appId}"
+            else
+              sql"UPDATE appointment SET status = ${AppointmentStatus.Canceled}, notification_status = ${NotificationStatus.ToCancel} WHERE id = ${appId}"
+
+          affectedRows <- update.update.run.transact(T)
+
+        } yield affectedRows > 0
+
+      def attend(appId: AppointmentId): F[Boolean] =
+        for {
+          affectedRows <-
+            sql"UPDATE appointment SET status = ${AppointmentStatus.Attended} WHERE id = ${appId}".update.run
+              .transact(T)
+        } yield affectedRows > 0
+
+      def findOne(appId: AppointmentId): F[Option[Appointment]] =
+        for {
+          app <-
+            sql"select id, date, doctor_id, patient_id, medical_record_id, date_of_scheduling, status, notification_status from appointment where id = $appId"
+              .query[Appointment]
+              .option
+              .transact(T)
+        } yield app
+
+      def findAllByPatient(patId: PatientId): F[List[Appointment]] =
+        for {
+          appL <-
+            sql"select id, date, doctor_id, patient_id, medical_record_id, date_of_scheduling, status, notification_status from appointment where patient_id = $patId"
+              .query[Appointment]
+              .to[List]
+              .transact(T)
+        } yield appL
+
+      def updateMissed: F[Int] = ???
+
+      def findAllByDoctor(docId: DoctorId): F[List[Appointment]] =
+        for {
+          appL <-
+            sql"select id, date, doctor_id, patient_id, medical_record_id, date_of_scheduling, status, notification_status from appointment where doctor_id = $docId"
+              .query[Appointment]
+              .to[List]
+              .transact(T)
+        } yield appL

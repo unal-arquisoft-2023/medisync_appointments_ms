@@ -22,15 +22,12 @@ object QuickstartServer:
     for {
 
       config <- Configuration.load[F]()
+
+      db <- Database.transactor(config.database)
+      _ <- Resource.eval(Database.initialize(db))
+
       client <- EmberClientBuilder.default[F].build
-      helloWorldAlg = HelloWorld.impl[F]
-      jokeAlg = Jokes.impl[F](client)
       gw = TestGateway.impl[F](client)
-
-      db <- Database.transactor(config.database) map { db =>
-        Database.initialize(db); db
-      }
-
 
       apService = AppointmentService.impl(db, gw)
 
