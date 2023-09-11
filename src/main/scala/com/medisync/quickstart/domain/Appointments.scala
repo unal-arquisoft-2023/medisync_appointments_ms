@@ -20,6 +20,8 @@ import org.http4s.CacheDirective.public
 import com.medisync.quickstart.Doctors.DoctorId
 import io.circe._
 import io.circe.syntax._
+import General._
+import com.medisync.quickstart.Doctors.Specialty
 
 object Appointments:
   
@@ -65,36 +67,34 @@ object Appointments:
   given Meta[NotificationStatus] =
     pgJavaEnum[NotificationStatus]("notification_status_enum")
 
+
   case class Appointment(
       id: AppointmentId,
-      date: Instant,
+      timeRange: TimeRange,
       doctorId: DoctorId,
       patientId: PatientId,
       medicalRecordId: MedicalRecordId,
       dateOfScheduling: Instant,
       status: AppointmentStatus,
-      notificationStaus: NotificationStatus
+      notificationStaus: NotificationStatus,
+      specialty: Specialty
   )
 
   object  Appointment:
-    given encodeInstant: Encoder[Instant] = Encoder.encodeString.contramap[Instant](_.toString)
-
-    given decodeInstant: Decoder[Instant] = Decoder.decodeString.emapTry { str =>
-      Try(Instant.parse(str))
-    }
 
     given Encoder[AppointmentStatus] = Encoder.encodeString.contramap[AppointmentStatus](_.toString())
     given Encoder[NotificationStatus] = Encoder.encodeString.contramap[NotificationStatus](_.toString())
     given Encoder[Appointment] = new Encoder[Appointment]:
       final def apply(app: Appointment): Json = Json.obj(
         ("id",app.id.asJson),
-        ("date",app.date.asJson),
+        ("date",app.timeRange.asJson),
         ("doctor_id",app.doctorId.asJson),
         ("patiend_id",app.patientId.asJson),
         ("medical_record_id",app.medicalRecordId.asJson),
         ("date_of_scheduling",app.dateOfScheduling.asJson),
         ("status", app.status.asJson),
-        ("notification_status",app.notificationStaus.asJson)
+        ("notification_status",app.notificationStaus.asJson),
+        ("specialty",app.specialty.asJson)
       ) 
 
 
@@ -103,32 +103,37 @@ object Appointments:
         (
             AppointmentId,
             Instant,
+            Instant,
             DoctorId,
             PatientId,
             MedicalRecordId,
             Instant,
             AppointmentStatus,
-            NotificationStatus
+            NotificationStatus,
+            Specialty
         )
       ].map {
         case (
               appId,
-              date,
+              startt,
+              endt,
               docId,
               patId,
               medRecId,
               dateOfSch,
               status,
-              notifStatus
+              notifStatus,
+              spe
             ) =>
           Appointment(
             appId,
-            date,
+            TimeRange(startt,endt),
             docId,
             patId,
             medRecId,
             dateOfSch,
             status,
-            notifStatus
+            notifStatus,
+            spe
           )
     }

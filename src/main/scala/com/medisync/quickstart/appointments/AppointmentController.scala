@@ -47,7 +47,7 @@ object AppointmentController:
       case req @ POST -> Root / "appointment" =>
         for {
           dto <- req.as[CreateAppointmentDTO]
-          apId <- apService.create(dto.patientId, dto.doctorId, dto.date)
+          apId <- apService.create(dto.patientId, dto.doctorId, dto.date, dto.specialty)
           res <- Status.Created(json"""{"appointment_id": $apId}""")
         } yield res
 

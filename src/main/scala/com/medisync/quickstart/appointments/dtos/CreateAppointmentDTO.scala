@@ -7,16 +7,18 @@ import io.circe.{Decoder, Encoder}
 import org.http4s.EntityDecoder
 import org.http4s.circe._
 import cats.effect.Concurrent
+import com.medisync.quickstart.General.TimeRange
 
 final case class CreateAppointmentDTO(
     patientId: PatientId,
     doctorId: DoctorId,
-    date: Instant
+    date: TimeRange,
+    specialty: Specialty
 )
 
 object CreateAppointmentDTO:
   given JsonDecoderCreateAppointmentDTO: Decoder[CreateAppointmentDTO] =
-    Decoder.forProduct3("patient_id", "doctor_id", "date")(
+    Decoder.forProduct4[CreateAppointmentDTO, PatientId, DoctorId, TimeRange, Specialty]("patient_id", "doctor_id", "date","specialty")(
       CreateAppointmentDTO.apply
     )
   given EntityDecoderCreateAppointmentDTO[F[_]: Concurrent]

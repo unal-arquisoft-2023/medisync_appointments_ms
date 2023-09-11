@@ -20,10 +20,11 @@ import doobie.postgres.pgisimplicits._
 import outside.Gateway
 import com.medisync.quickstart.Appointments._
 import NewtypesDoobie._
+import General._
 import com.medisync.quickstart.Doctors._
 
 trait AppointmentService[F[_]]:
-  def create(patId: PatientId, docId: DoctorId, date: Instant): F[AppointmentId]
+  def create(patId: PatientId, docId: DoctorId, date: TimeRange, specialty: Specialty): F[AppointmentId]
   def delete(appId: AppointmentId): F[Boolean]
   def attend(appId: AppointmentId): F[Boolean]
   def findOne(appId: AppointmentId): F[Option[Appointment]]
@@ -43,23 +44,26 @@ object AppointmentService:
       def create(
           patId: PatientId,
           docId: DoctorId,
-          date: Instant
+          date: TimeRange,
+          specialty: Specialty
       ): F[AppointmentId] =
         for {
           medRecId <- gw.createMedicalRecord
-          insert = sql"INSERT INTO appointment (doctor_id,patient_id,medical_record_id,date,status,notification_status) " ++
-            sql"VALUES ($docId,$patId,$medRecId,$date,${AppointmentStatus.Pending},${NotificationStatus.ToNotify})"
+          insert = sql"INSERT INTO appointment (doctor_id,patient_id,medical_record_id,start_time,end_time,status,notification_status,specialty) " ++
+            sql"VALUES ($docId,$patId,$medRecId,${date.start},${date.end},${AppointmentStatus.Pending},${NotificationStatus.ToNotify},$specialty)"
 
           app <- insert.update
             .withUniqueGeneratedKeys[Appointment](
               "id",
-              "date",
+              "start_time",
+              "end_time",
               "doctor_id",
               "patient_id",
               "medical_record_id",
               "date_of_scheduling",
               "status",
-              "notification_status"
+              "notification_status",
+              "specialty"
             )
             .transact(T)
 
@@ -98,7 +102,7 @@ object AppointmentService:
       def findOne(appId: AppointmentId): F[Option[Appointment]] =
         for {
           app <-
-            sql"select id, date, doctor_id, patient_id, medical_record_id, date_of_scheduling, status, notification_status from appointment where id = $appId"
+            sql"select id, start_time, end_time, doctor_id, patient_id, medical_record_id, date_of_scheduling, status, notification_status, specialty from appointment where id = $appId"
               .query[Appointment]
               .option
               .transact(T)
@@ -107,18 +111,19 @@ object AppointmentService:
       def findAllByPatient(patId: PatientId): F[List[Appointment]] =
         for {
           appL <-
-            sql"select id, date, doctor_id, patient_id, medical_record_id, date_of_scheduling, status, notification_status from appointment where patient_id = $patId"
+            sql"select id, start_time, end_time, doctor_id, patient_id, medical_record_id, date_of_scheduling, status, notification_status, specialty from appointment where patient_id = $patId"
               .query[Appointment]
               .to[List]
               .transact(T)
         } yield appL
 
       def updateMissed: F[Int] = ???
+        // update = sql"UPDATE appointments SET staus = ${AppointmentsStatus.Missed} WHERE "
 
       def findAllByDoctor(docId: DoctorId): F[List[Appointment]] =
         for {
           appL <-
-            sql"select id, date, doctor_id, patient_id, medical_record_id, date_of_scheduling, status, notification_status from appointment where doctor_id = $docId"
+            sql"select id, start_time, end_time, doctor_id, patient_id, medical_record_id, date_of_scheduling, status, notification_status, specialty from appointment where doctor_id = $docId"
               .query[Appointment]
               .to[List]
               .transact(T)
