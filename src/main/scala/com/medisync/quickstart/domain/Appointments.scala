@@ -102,8 +102,7 @@ object Appointments:
       Read[
         (
             AppointmentId,
-            Instant,
-            Instant,
+            TimeRange,
             DoctorId,
             PatientId,
             MedicalRecordId,
@@ -115,8 +114,7 @@ object Appointments:
       ].map {
         case (
               appId,
-              startt,
-              endt,
+              time,
               docId,
               patId,
               medRecId,
@@ -127,7 +125,7 @@ object Appointments:
             ) =>
           Appointment(
             appId,
-            TimeRange(startt,endt),
+            time,
             docId,
             patId,
             medRecId,

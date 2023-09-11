@@ -30,9 +30,11 @@ object QuickstartServer:
       gw = TestGateway.impl[F](client)
 
       apService = AppointmentService.impl(db, gw)
+      daService = DoctorService.impl(db,gw)
 
       httpApp = (
-        AppointmentController[F](apService)
+        AppointmentController[F](apService) <+>
+        DoctorController[F](daService)
       ).orNotFound
 
       // With Middlewares in place

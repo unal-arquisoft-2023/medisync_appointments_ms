@@ -24,6 +24,7 @@ import Doctors.DoctorId
 import com.medisync.quickstart.Appointments.AppointmentId
 import NewtypesRouteVar.Var
 import cats.data.EitherT
+import cats.data.OptionT
 
 object AppointmentController:
   import Appointments.Appointment
@@ -54,7 +55,7 @@ object AppointmentController:
       case GET -> Root / "appointment" / Var[AppointmentId](appId) =>
         for {
           app <- apService.findOne(appId)
-          res <- Ok(app.asJson)
+          res <- (app).map(x => Ok(x.asJson)).getOrElse(Status.NotFound())
         } yield res
 
       case POST -> Root / "appointment" / Var[AppointmentId](

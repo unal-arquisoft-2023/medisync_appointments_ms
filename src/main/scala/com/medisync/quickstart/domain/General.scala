@@ -40,6 +40,46 @@ object General:
   given encodeInstant: Encoder[Instant] =
     Encoder.encodeString.contramap[Instant](_.toString)
 
-  given decodeInstant: Decoder[Instant] = Decoder.decodeString.emapTry { str =>
-    Try(Instant.parse(str))
-  }
+  given decodeInstant: Decoder[Instant] =
+    Decoder.decodeString.emapTry(str => Try(Instant.parse(str)))
+
+  given Read[TimeRange] = Read[(Instant,Instant)].map(TimeRange.apply)
+
+  enum DayOfWeek(val v: Int):
+    case Monday extends DayOfWeek(1)
+    case Tuesday extends DayOfWeek(2)
+    case Wednesday extends DayOfWeek(3)
+    case Thursday extends DayOfWeek(4)
+    case Friday extends DayOfWeek(5)
+    case Saturday extends DayOfWeek(6)
+    case Sunday extends DayOfWeek(7)
+
+    def toInt: Int = v
+    override def toString(): String = v match {
+      case 1 => "monday"
+      case 2 => "tuesday"
+      case 3 => "wednesday"
+      case 4 => "thursday"
+      case 5 => "friday"
+      case 6 => "saturday"
+      case 7 => "sunday"
+    }
+
+
+  object DayOfWeek:
+    def fromInt(v: Int): DayOfWeek = v match {
+      case 1 => Monday
+      case 2 => Tuesday
+      case 3 => Wednesday
+      case 4 => Thursday
+      case 5 => Friday
+      case 6 => Saturday
+      case 7 => Sunday
+      case _ =>
+        throw java.lang.IllegalArgumentException(
+          "Day should be represented with a number from 1 to 7"
+        )
+    }
+    given Encoder[DayOfWeek] = Encoder.encodeInt.contramap[DayOfWeek](_.toInt)
+    given Decoder[DayOfWeek] =
+      Decoder.decodeInt.emapTry[DayOfWeek](v => Try(DayOfWeek.fromInt(v)))

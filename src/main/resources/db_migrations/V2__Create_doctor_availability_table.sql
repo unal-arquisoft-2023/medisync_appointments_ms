@@ -1,12 +1,13 @@
 CREATE TABLE doctor_availability (
     id SERIAL NOT NULL PRIMARY KEY,
     doctor_id INT NOT NULL,
-    specialty_id INT NOT NULL, 
-    monday tstzrange NULL,
-    tuesday tstzrange NULL,
-    wednesday tstzrange NULL,
-    thursday tstzrange NULL,
-    friday tstzrange NULL,
-    saturday tstzrange NULL,
-    sunday tstzrange NULL
+    specialty specialty_enum NOT NULL, 
+    enabled BOOLEAN NOT NULL,
+    monday tstzrange NULL DEFAULT NULL,
+    tuesday tstzrange NULL DEFAULT NULL,
+    wednesday tstzrange NULL DEFAULT NULL,
+    thursday tstzrange NULL DEFAULT NULL,
+    friday tstzrange NULL DEFAULT NULL,
+    saturday tstzrange NULL DEFAULT NULL,
+    sunday tstzrange NULL DEFAULT NULL
 );
