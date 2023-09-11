@@ -1,7 +1,6 @@
 package com.medisync.quickstart
 import java.time.Instant
 import monix.newtypes._
-import monix.newtypes.HasBuilder._
 
 import monix.newtypes.integrations.DerivedCirceCodec
 import doobie.util.meta.Meta
