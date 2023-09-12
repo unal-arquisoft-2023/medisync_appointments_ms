@@ -22,11 +22,14 @@ import com.medisync.quickstart.Appointments._
 import NewtypesDoobie._
 import General._
 import com.medisync.quickstart.Doctors._
+import java.time.format.DateTimeFormatter
+import java.time.ZoneId
 
 trait DoctorService[F[_]]:
   def generate(docId: DoctorId, spec: Specialty): F[DoctorAvailabilityId]
   def findOne(docId: DoctorId, spec: Specialty): F[Option[DoctorAvailability]]
   def update(docAvId: DoctorAvailabilityId, day: DayOfWeek, time: TimeRange): F[Boolean]
+  def isAvailable(docId: DoctorId, spe: Specialty, day: DayOfWeek, time: TimeRange): F[Boolean]
 
 
 object DoctorService:
@@ -56,4 +59,20 @@ object DoctorService:
         } yield docAv
 
 
-      def update(docAvId: DoctorAvailabilityId, day: DayOfWeek, time: TimeRange): F[Boolean] = ???
+      def update(docAvId: DoctorAvailabilityId, day: DayOfWeek, time: TimeRange): F[Boolean] = 
+        val dayStr = day.toString()
+        val trString = TimeRange.toString()
+        val update = sql"UPDATE doctor_availability SET monday = $trString::tstzrange WHERE id = $docAvId"
+        for {
+          r <- update.update.run.transact(T)
+        } yield r > 0
+      
+      def isAvailable(docId: DoctorId, spe: Specialty, day: DayOfWeek, time: TimeRange): F[Boolean] = 
+        val dayStr = day.toString()
+        val trString = TimeRange.toString()
+        val schQuery = sql"SELECT $trString::tstzrange @> $dayStr::tstzrange FROM doctor_availability WHERE doctor_id = $docId AND specialty=$spe"
+        val appQuery = sql"SELECT bool_or($trString::tstzrange &> tstzrange(start_time, end_time)) WHERE doctor_id = $docId AND specialty = $spe"
+        for {
+          inSchedule <- schQuery.query[Boolean].unique.transact(T)
+          not_available <- appQuery.query[Boolean].unique.transact(T)
+        } yield inSchedule || !not_available

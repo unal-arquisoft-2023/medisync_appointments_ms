@@ -16,9 +16,34 @@ import java.time.Instant
 import io.circe.Decoder.Result
 import io.circe.DecodingFailure.Reason
 import io.circe.DecodingFailure
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.ZoneOffset
+import java.util.Calendar
 
 object General:
-  case class TimeRange(start: Instant, end: Instant)
+  case class TimeRange(start: Instant, end: Instant):
+    override def toString() =
+        val fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX")
+        val startStr = start.atZone(ZoneId.of("UTC"))
+        val endStr = end.atZone(ZoneId.of("UTC"))
+        s"[$startStr , $endStr)"
+
+  val reference = Instant.parse("2023-09-10T00:00:00Z");
+  val referenceDay = reference.atZone(ZoneOffset.UTC).getDayOfYear()
+  val referenceYear = reference.atZone(ZoneOffset.UTC).getYear()
+
+  def stripDayAndOther(i: Instant) = 
+    val info = i.atZone(ZoneOffset.UTC)
+    val hour = info.getHour()
+    val minute = info.getMinute()
+
+    reference.atZone(ZoneOffset.UTC)
+    .withHour(hour)
+    .withMinute(minute)
+    .toInstant()
+
+
 
   given Encoder[TimeRange] =
     Encoder.forProduct2("start", "end")(tr => (tr.start, tr.end))
@@ -28,8 +53,13 @@ object General:
       for {
         start <- c.downField("start").as[Instant]
         end <- c.downField("end").as[Instant]
+        sameDay = start
+          .atZone(ZoneId.of("-5"))
+          .getDayOfWeek()
+          .equals(end.atZone(ZoneId.of("-5")).getDayOfWeek())
         res <-
-          if start.compareTo(end) < 0 then TimeRange(start, end).asRight
+          if start.compareTo(end) < 0 then
+            TimeRange(stripDayAndOther(start), stripDayAndOther(end)).asRight
           else
             DecodingFailure(
               Reason.CustomReason("start time must be before end time"),
@@ -37,13 +67,15 @@ object General:
             ).asLeft
       } yield res
 
+
+
   given encodeInstant: Encoder[Instant] =
     Encoder.encodeString.contramap[Instant](_.toString)
 
   given decodeInstant: Decoder[Instant] =
     Decoder.decodeString.emapTry(str => Try(Instant.parse(str)))
 
-  given Read[TimeRange] = Read[(Instant,Instant)].map(TimeRange.apply)
+  given Read[TimeRange] = Read[(Instant, Instant)].map(TimeRange.apply)
 
   enum DayOfWeek(val v: Int):
     case Monday extends DayOfWeek(1)
@@ -64,7 +96,6 @@ object General:
       case 6 => "saturday"
       case 7 => "sunday"
     }
-
 
   object DayOfWeek:
     def fromInt(v: Int): DayOfWeek = v match {

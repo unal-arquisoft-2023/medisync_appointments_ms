@@ -25,11 +25,12 @@ import com.medisync.quickstart.Doctors._
 
 trait AppointmentService[F[_]]:
   def create(patId: PatientId, docId: DoctorId, date: TimeRange, specialty: Specialty): F[AppointmentId]
-  def delete(appId: AppointmentId): F[Boolean]
+  def cancel(appId: AppointmentId): F[Boolean]
   def attend(appId: AppointmentId): F[Boolean]
   def findOne(appId: AppointmentId): F[Option[Appointment]]
   def findAllByPatient(patId: PatientId): F[List[Appointment]]
   def findAllByDoctor(docId: DoctorId): F[List[Appointment]]
+
 
   def updateMissed: F[Int]
 
@@ -37,7 +38,7 @@ object AppointmentService:
   def apply[F[_]](implicit ev: AppointmentService[F]): AppointmentService[F] =
     ev
 
-  def impl[F[_]: Async](T: Transactor[F], gw: Gateway[F]) =
+  def impl[F[_]: Async](T: Transactor[F], ds: DoctorService[F], gw: Gateway[F]) =
     new AppointmentService[F]:
       val dsl = new Http4sClientDsl[F] {}
       import dsl._
@@ -48,6 +49,11 @@ object AppointmentService:
           specialty: Specialty
       ): F[AppointmentId] =
         for {
+
+          // available <- ds.isAvailable(docId, specialty, DayOfWeek.Sunday, date)
+
+          // _ <- Async[F].raiseWhen(!available)(new Error("Time and date not available"))
+
           medRecId <- gw.createMedicalRecord
           insert = sql"INSERT INTO appointment (doctor_id,patient_id,medical_record_id,start_time,end_time,status,notification_status,specialty) " ++
             sql"VALUES ($docId,$patId,$medRecId,${date.start},${date.end},${AppointmentStatus.Pending},${NotificationStatus.ToNotify},$specialty)"
@@ -78,7 +84,7 @@ object AppointmentService:
           _ <- update.update.run.transact(T)
         } yield app.id
 
-      def delete(appId: AppointmentId): F[Boolean] =
+      def cancel(appId: AppointmentId): F[Boolean] =
         for {
           deleted <- gw.deleteNotification(appId)
 
@@ -128,3 +134,6 @@ object AppointmentService:
               .to[List]
               .transact(T)
         } yield appL
+
+
+

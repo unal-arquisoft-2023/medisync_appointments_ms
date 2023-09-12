@@ -29,8 +29,8 @@ object QuickstartServer:
       client <- EmberClientBuilder.default[F].build
       gw = TestGateway.impl[F](client)
 
-      apService = AppointmentService.impl(db, gw)
       daService = DoctorService.impl(db,gw)
+      apService = AppointmentService.impl(db, daService, gw)
 
       httpApp = (
         AppointmentController[F](apService) <+>

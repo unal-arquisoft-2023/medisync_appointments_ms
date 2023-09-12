@@ -23,9 +23,9 @@ import Doctors.DoctorAvailability._
 import com.medisync.quickstart.Doctors.DoctorId
 import NewtypesRouteVar.Var
 import cats.data.EitherT
+import cats.data.OptionT
 
 object DoctorController:
-
 
   def apply[F[_]: Concurrent](apService: DoctorService[F]): HttpRoutes[F] =
     val dsl = new Http4sDsl[F] {}
@@ -39,11 +39,23 @@ object DoctorController:
           res <- Status.Created(json"""{"doctor_availability_id": $apId}""")
         } yield res
 
-      case GET -> Root / "Doctor" / Var[DoctorId](appId) / Var[Specialty](spe) =>
+      case GET -> Root / "doctor" / Var[Specialty](spe) / Var[DoctorId](
+            docId
+          ) =>
         for {
-          docAvOp <- apService.findOne(appId,spe)
+          docAvOp <- apService.findOne(docId, spe)
           res <- docAvOp.map(x => Ok(x.asJson)).getOrElse(Status.NotFound())
         } yield res
 
+      case req @ POST -> Root / "doctor" / Var[Specialty](spe) / Var[DoctorId](
+            docId
+          ) =>
+        for {
+          docAvOp <- apService.findOne(docId, spe)
+          dto <- req.as[UpdateDoctorAvailabilityDTO]
+          res <- docAvOp
+            .map(v => apService.update(v.id, dto.day, dto.time) >> Ok())
+            .getOrElse(Status.NotFound())
+        } yield res
 
     }

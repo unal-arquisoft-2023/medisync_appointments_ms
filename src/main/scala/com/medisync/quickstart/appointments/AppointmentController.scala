@@ -81,7 +81,7 @@ object AppointmentController:
             .map(ap => check(ap.status))
             .merge
           _ <-
-            if statusVal.isRight then apService.delete(appId) else false.pure[F]
+            if statusVal.isRight then apService.cancel(appId) else false.pure[F]
           res <- statusVal.merge
         } yield res
 
