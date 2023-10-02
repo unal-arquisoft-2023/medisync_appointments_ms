@@ -5,11 +5,19 @@ val LogbackVersion = "1.2.6"
 val MunitCatsEffectVersion = "1.0.6"
 val PureconfigVersion = "0.17.4"
 val DoobieVersion = "1.0.0-RC4"
-val FlywayVersion = "9.22.0"
+val FlywayVersion = "9.22.2"
 val MonixNewtypesVersion = "0.2.3"
 val CirceVersion = "0.14.5"
 val SpireVersion = "0.18.0"
-
+assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.first   
+  case x =>
+        val oldStrategy = (assembly / assemblyMergeStrategy).value
+        oldStrategy(x)
+}
+// ThisBuild / assemblyShadeRules := Seq(
+//   ShadeRule.rename("com.fasterxml.core.**" -> "shadeio.@1").inAll
+// )
 
 lazy val root = (project in file("."))
   .settings(

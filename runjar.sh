@@ -1,0 +1,1 @@
+java -cp ./target/scala-3.3.0/quickstart-assembly-0.0.1-SNAPSHOT.jar com.medisync.quickstart.Main
