@@ -1,4 +1,4 @@
-FROM sbtscala/scala-sbt:eclipse-temurin-17.0.4_1.7.1_3.2.0 as appointments_ms
+FROM eclipse-temurin:11 as appointment_ms
 WORKDIR /app
-COPY . .
-CMD ["sbt run ."]
+COPY ./target/scala-3.3.0/quickstart-assembly-0.0.1-SNAPSHOT.jar .
+CMD java -cp ./quickstart-assembly-0.0.1-SNAPSHOT.jar com.medisync.quickstart.Main

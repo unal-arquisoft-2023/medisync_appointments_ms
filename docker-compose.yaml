@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  appointments_ms:
+    container_name: appointments_ms 
+    image: appointments_ms 
+    build:
+      context: .
+      target: appointment_ms
+      dockerfile: ./Dockerfile
+    ports:
+      - 8081:8081
+    networks:
+      - appriceit-network
+    links:
+      - "db:db"
+    restart: unless-stopped
+
+  db:
+    container_name: appointments_db
+    image: postgres:15.4-alpine
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: medisyncdb
+    ports:
+      - 5432:5432
+    networks:
+      - appriceit-network
+
+networks:
+  appriceit-network:
