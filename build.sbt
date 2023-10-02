@@ -8,6 +8,8 @@ val DoobieVersion = "1.0.0-RC4"
 val FlywayVersion = "9.22.0"
 val MonixNewtypesVersion = "0.2.3"
 val CirceVersion = "0.14.5"
+val SpireVersion = "0.18.0"
+
 
 lazy val root = (project in file("."))
   .settings(
@@ -32,13 +34,19 @@ lazy val root = (project in file("."))
       "org.tpolecat"%% "doobie-specs2" % DoobieVersion,
       "org.tpolecat"%% "doobie-hikari" % DoobieVersion,
 
+      "io.circe" %% "circe-core" % CirceVersion,
       "io.circe" %% "circe-generic" % CirceVersion,
       "io.circe" %% "circe-literal" % CirceVersion,
+      "io.circe" %% "circe-parser" % CirceVersion,
 
       "org.flywaydb" % "flyway-core" % FlywayVersion,
 
       "io.monix" %% "newtypes-core" % MonixNewtypesVersion,
       "io.monix" %% "newtypes-circe-v0-14" % MonixNewtypesVersion,
+
+      "org.typelevel" %% "spire" % SpireVersion,
+      "org.typelevel" %% "spire-extras" % SpireVersion,
+
     ),
     testFrameworks += new TestFramework("munit.Framework")
   )

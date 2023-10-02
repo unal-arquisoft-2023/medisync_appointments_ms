@@ -1,4 +1,4 @@
-package com.medisync.quickstart
+package com.medisync.quickstart.utilities
 
 import cats.Show
 import monix.newtypes.*

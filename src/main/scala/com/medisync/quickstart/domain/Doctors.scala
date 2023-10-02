@@ -1,10 +1,9 @@
-package com.medisync.quickstart
-import java.time.LocalTime
+package com.medisync.quickstart.domain
 import monix.newtypes._
 import monix.newtypes.integrations.DerivedCirceCodec
-import NewtypesDoobie._
-import NewtypesHttp4s._
-import General._
+import com.medisync.quickstart.utilities.NewtypesRouteVar._
+import com.medisync.quickstart.utilities.NewtypesDoobie._
+import com.medisync.quickstart.utilities.NewtypesHttp4s._
 import io.circe._
 import io.circe.syntax._
 import scala.util.Try
@@ -13,12 +12,19 @@ import doobie.implicits._
 import doobie.implicits.javasql._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import NewtypesRouteVar._
-import java.time.Instant
-import javax.print.Doc
 import doobie.enumerated.JdbcType.Time
+import java.time.LocalDate
+import java.time.LocalTime
+import com.medisync.quickstart.utilities.{
+  NewtypesDoobie,
+  NewtypesHttp4s,
+  NewtypesRouteVar
+}
+import com.medisync.quickstart.utilities.TimeIntervals._
+import com.medisync.quickstart.utilities.TimeIntervals.given
+import com.medisync.quickstart.domain.Appointments.BlockId
 
-object Doctors {
+object Doctors:
 
   type DoctorId = DoctorId.Type
   object DoctorId
@@ -26,6 +32,7 @@ object Doctors {
       with DerivedCirceCodec
       with DerivedDoobieCodec
       with DerivedHttp4sParamCodec
+  given KeyEncoder[DoctorId] = (key: DoctorId) => key.toString()
 
   type DoctorAvailabilityId = DoctorAvailabilityId.Type
   object DoctorAvailabilityId
@@ -63,71 +70,79 @@ object Doctors {
   object Specialty:
     given RouteUnapplicable[Specialty] = new RouteUnapplicable[Specialty]:
       def unapply(value: String) = Try(Specialty.valueOf(value)).toOption
+
     given Encoder[Specialty] =
       Encoder.encodeString.contramap[Specialty](_.toString())
+
     given Decoder[Specialty] =
       Decoder.decodeString.emapTry[Specialty](v => Try(Specialty.valueOf(v)))
+
     given Meta[Specialty] = pgEnumStringOpt(
       "specialty_enum",
       v => Try(Specialty.valueOf(v)).toOption,
       _.toString()
     )
 
-  case class WeekSchedule(
-      monday: Option[TimeRange],
-      tuesday: Option[TimeRange],
-      wednesday: Option[TimeRange],
-      thursday: Option[TimeRange],
-      friday: Option[TimeRange],
-      saturday: Option[TimeRange],
-      sunday: Option[TimeRange]
+  case class TimeBlock(
+      id: BlockId,
+      startTime: LocalTime,
+      endTime: LocalTime
   )
 
-  object WeekSchedule:
-    given Encoder[WeekSchedule] = new Encoder[WeekSchedule]:
-      final def apply(ws: WeekSchedule): Json = Json.obj(
-        ("1", ws.monday.asJson),
-        ("2", ws.tuesday.asJson),
-        ("3", ws.wednesday.asJson),
-        ("4", ws.thursday.asJson),
-        ("5", ws.friday.asJson),
-        ("6", ws.saturday.asJson),
-        ("7", ws.sunday.asJson)
+  given Encoder[TimeBlock] = new Encoder[TimeBlock]:
+    def apply(a: TimeBlock): Json = 
+      Json.obj(
+        ("id", a.id.asJson),
+        ("start", a.startTime.asJson),
+        ("end", a.endTime.asJson)
       )
 
-    given Read[WeekSchedule] = Read[
-      (
-          Option[TimeRange],
-          Option[TimeRange],
-          Option[TimeRange],
-          Option[TimeRange],
-          Option[TimeRange],
-          Option[TimeRange],
-          Option[TimeRange]
-      )
-    ].map(WeekSchedule.apply)
+  given Read[TimeBlock] =
+    Read[(BlockId, LocalTime, LocalTime)].map { case (id, st, et) =>
+      TimeBlock(id, st, et)
+    }
+
   case class DoctorAvailability(
+      doctorId: DoctorId,
+      specialty: Specialty,
+      date: LocalDate,
+      times: List[TimeBlock]
+  )
+
+  given Encoder[DoctorAvailability] = new Encoder[DoctorAvailability]:
+    def apply(a: DoctorAvailability): Json = 
+      Json.obj(
+        ("doctorId", a.doctorId.asJson),
+        ("specialty", a.specialty.asJson),
+        ("date", a.date.asJson),
+        ("times", a.times.asJson)
+      )
+
+  case class DoctorAvailabilityRegister(
       id: DoctorAvailabilityId,
       doctorId: DoctorId,
       specialty: Specialty,
-      enabled: Boolean,
-      schedule: WeekSchedule
+      date: LocalDate,
+      times: LocalTimeInterval
   )
 
-  object DoctorAvailability:
-    given Encoder[DoctorAvailability] = new Encoder[DoctorAvailability]:
-      final def apply(docAv: DoctorAvailability): Json = Json.obj(
-        ("id", docAv.id.asJson),
-        ("doctor_id", docAv.doctorId.asJson),
-        ("specialty", docAv.specialty.asJson),
-        ("enabled", docAv.enabled.asJson),
-        ("schedule", docAv.schedule.asJson)
+
+  given Read[DoctorAvailabilityRegister] =
+    Read[
+      (
+          DoctorAvailabilityId,
+          DoctorId,
+          Specialty,
+          LocalDate,
+          LocalTime,
+          LocalTime
       )
-
-    given Read[DoctorAvailability] =
-      Read[(DoctorAvailabilityId, DoctorId, Specialty, Boolean, WeekSchedule)]
-        .map(
-          DoctorAvailability.apply
-        )
-
-}
+    ].map { case (id, docId, spe, date, startTime, endTime) =>
+      DoctorAvailabilityRegister(
+        id,
+        docId,
+        spe,
+        date,
+        LocalTimeInterval.create(startTime, endTime)
+      )
+    }

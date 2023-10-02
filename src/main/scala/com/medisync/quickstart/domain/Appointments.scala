@@ -1,13 +1,14 @@
-package com.medisync.quickstart
+package com.medisync.quickstart.domain
 import java.time.Instant
 import monix.newtypes._
 
 import monix.newtypes.integrations.DerivedCirceCodec
 import doobie.util.meta.Meta
-import NewtypesDoobie._
+import com.medisync.quickstart.utilities.NewtypesDoobie._
+import com.medisync.quickstart.utilities.NewtypesHttp4s._
+import Doctors._
 
 import cats.Show
-import NewtypesHttp4s._
 
 import scala.util.Try
 
@@ -17,22 +18,20 @@ import doobie.implicits.javasql._
 import doobie.postgres._
 import doobie.postgres.implicits._
 import org.http4s.CacheDirective.public
-import com.medisync.quickstart.Doctors.DoctorId
 import io.circe._
 import io.circe.syntax._
-import General._
-import com.medisync.quickstart.Doctors.Specialty
+import java.time.LocalDate
+import java.time.LocalTime
+import com.medisync.quickstart.utilities.{NewtypesDoobie, NewtypesHttp4s}
 
 object Appointments:
-  
+
   type TestId = TestId.Type
   object TestId
       extends NewtypeWrapped[Int]
       with DerivedCirceCodec
       with DerivedDoobieCodec
       with DerivedHttp4sParamCodec
-  
-
 
   type AppointmentId = AppointmentId.Type
   object AppointmentId
@@ -40,6 +39,14 @@ object Appointments:
       with DerivedCirceCodec
       with DerivedDoobieCodec
       with DerivedHttp4sParamCodec
+
+  type BlockId = BlockId.Type
+  object BlockId
+      extends NewtypeWrapped[Int]
+      with DerivedCirceCodec
+      with DerivedDoobieCodec
+      with DerivedHttp4sParamCodec
+
 
   type MedicalRecordId = MedicalRecordId.Type
   object MedicalRecordId
@@ -58,51 +65,55 @@ object Appointments:
   enum AppointmentStatus extends Enum[AppointmentStatus]:
     case Pending, Canceled, Attended, Missed
 
-  given Meta[AppointmentStatus] =
-    pgJavaEnum[AppointmentStatus]("appointment_status_enum")
+  object AppointmentStatus:
+    given Meta[AppointmentStatus] =
+      pgJavaEnum[AppointmentStatus]("appointment_status_enum")
+    
+    given Encoder[AppointmentStatus] =
+      Encoder.encodeString.contramap[AppointmentStatus](_.toString())
 
   enum NotificationStatus extends Enum[NotificationStatus]:
     case ToNotify, Notified, ToCancel, Canceled
 
-  given Meta[NotificationStatus] =
-    pgJavaEnum[NotificationStatus]("notification_status_enum")
+  object NotificationStatus:
+    given Meta[NotificationStatus] =
+      pgJavaEnum[NotificationStatus]("notification_status_enum")
+    given Encoder[NotificationStatus] =
+      Encoder.encodeString.contramap[NotificationStatus](_.toString())
 
-
-  case class Appointment(
+  case class AppointmentRecord(
       id: AppointmentId,
-      timeRange: TimeRange,
+      date: LocalDate,
+      blockId: BlockId,
       doctorId: DoctorId,
       patientId: PatientId,
       medicalRecordId: MedicalRecordId,
-      dateOfScheduling: Instant,
+      scheduledTimestamp: Instant,
       status: AppointmentStatus,
-      notificationStaus: NotificationStatus,
+      notificationStatus: NotificationStatus,
       specialty: Specialty
   )
 
-  object  Appointment:
-
-    given Encoder[AppointmentStatus] = Encoder.encodeString.contramap[AppointmentStatus](_.toString())
-    given Encoder[NotificationStatus] = Encoder.encodeString.contramap[NotificationStatus](_.toString())
-    given Encoder[Appointment] = new Encoder[Appointment]:
-      final def apply(app: Appointment): Json = Json.obj(
-        ("id",app.id.asJson),
-        ("date",app.timeRange.asJson),
-        ("doctor_id",app.doctorId.asJson),
-        ("patiend_id",app.patientId.asJson),
-        ("medical_record_id",app.medicalRecordId.asJson),
-        ("date_of_scheduling",app.dateOfScheduling.asJson),
+  object AppointmentRecord:
+    given Encoder[AppointmentRecord] = new Encoder[AppointmentRecord]:
+      final def apply(app: AppointmentRecord): Json = Json.obj(
+        ("id", app.id.asJson),
+        ("date", app.date.asJson),
+        ("block_id", app.blockId.asJson),
+        ("doctor_id", app.doctorId.asJson),
+        ("patiend_id", app.patientId.asJson),
+        ("medical_record_id", app.medicalRecordId.asJson),
+        ("date_of_scheduling", app.scheduledTimestamp.asJson),
         ("status", app.status.asJson),
-        ("notification_status",app.notificationStaus.asJson),
-        ("specialty",app.specialty.asJson)
-      ) 
-
-
-    given Read[Appointment] =
+        ("notification_status", app.notificationStatus.asJson),
+        ("specialty", app.specialty.asJson)
+      )
+    given Read[AppointmentRecord] =
       Read[
         (
             AppointmentId,
-            TimeRange,
+            LocalDate,
+            BlockId,
             DoctorId,
             PatientId,
             MedicalRecordId,
@@ -113,25 +124,90 @@ object Appointments:
         )
       ].map {
         case (
-              appId,
-              time,
-              docId,
-              patId,
-              medRecId,
-              dateOfSch,
+              id,
+              date,
+              blockId,
+              doctorId,
+              patientId,
+              medicalRecordId,
+              scheduledTimestamp,
               status,
-              notifStatus,
-              spe
+              notificationStatus,
+              specialty
             ) =>
-          Appointment(
-            appId,
-            time,
-            docId,
-            patId,
-            medRecId,
-            dateOfSch,
+          AppointmentRecord(
+            id,
+            date,
+            blockId,
+            doctorId,
+            patientId,
+            medicalRecordId,
+            scheduledTimestamp,
             status,
-            notifStatus,
-            spe
+            notificationStatus,
+            specialty
           )
-    }
+      }
+
+  given Write[AppointmentRecord] =
+    Write[
+      (
+          AppointmentId,
+          LocalDate,
+          DoctorId,
+          PatientId,
+          MedicalRecordId,
+          Instant,
+          AppointmentStatus,
+          NotificationStatus,
+          Specialty
+      )
+    ]
+      .contramap(app =>
+        (
+          app.id,
+          app.date,
+          app.doctorId,
+          app.patientId,
+          app.medicalRecordId,
+          app.scheduledTimestamp,
+          app.status,
+          app.notificationStatus,
+          app.specialty
+        )
+      )
+
+  case class Appointment(
+      id: AppointmentId,
+      date: LocalDate,
+      startTime: LocalTime,
+      endTime: LocalTime,
+      blockId: BlockId,
+      doctorId: DoctorId,
+      patientId: PatientId,
+      medicalRecordId: MedicalRecordId,
+      scheduledTimestamp: Instant,
+      status: AppointmentStatus,
+      notificationStatus: NotificationStatus,
+      specialty: Specialty
+  )
+
+
+  object Appointment:
+
+    given Encoder[Appointment] = new Encoder[Appointment]:
+      final def apply(app: Appointment): Json = Json.obj(
+        ("id", app.id.asJson),
+        ("date", app.date.asJson),
+        (
+          "time",
+          Json.obj(("start", app.startTime.asJson), ("end", app.endTime.asJson))
+        ),
+        ("doctor_id", app.doctorId.asJson),
+        ("patiend_id", app.patientId.asJson),
+        ("medical_record_id", app.medicalRecordId.asJson),
+        ("date_of_scheduling", app.scheduledTimestamp.asJson),
+        ("status", app.status.asJson),
+        ("notification_status", app.notificationStatus.asJson),
+        ("specialty", app.specialty.asJson)
+      )

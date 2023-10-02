@@ -1,4 +1,4 @@
-package com.medisync.quickstart
+package com.medisync.quickstart.appointment
 
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
@@ -18,16 +18,14 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.literal._
 import CreateAppointmentDTO._
-import Appointments._
-import Appointments.Appointment._
-import Doctors.DoctorId
-import com.medisync.quickstart.Appointments.AppointmentId
-import NewtypesRouteVar.Var
+import com.medisync.quickstart.domain.Appointments._
+import com.medisync.quickstart.domain.Doctors._
+import com.medisync.quickstart.utilities.NewtypesRouteVar.Var
 import cats.data.EitherT
 import cats.data.OptionT
+import com.medisync.quickstart.utilities.NewtypesRouteVar
 
 object AppointmentController:
-  import Appointments.Appointment
 
   implicit val isoInstantCodec: QueryParamCodec[Instant] =
     QueryParamCodec.instantQueryParamCodec(DateTimeFormatter.ISO_INSTANT)
@@ -45,10 +43,10 @@ object AppointmentController:
     import dsl._
     import AppointmentService._
     HttpRoutes.of[F] {
-      case req @ POST -> Root / "appointment" =>
+      case req @ POST -> Root / "appointment" => 
         for {
           dto <- req.as[CreateAppointmentDTO]
-          apId <- apService.create(dto.patientId, dto.doctorId, dto.date, dto.specialty)
+          apId <- apService.create(dto.patientId, dto.doctorId, dto.date, dto.specialty, dto.blockId)
           res <- Status.Created(json"""{"appointment_id": $apId}""")
         } yield res
 

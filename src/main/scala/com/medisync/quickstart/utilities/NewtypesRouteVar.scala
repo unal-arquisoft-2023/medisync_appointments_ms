@@ -1,4 +1,4 @@
-package com.medisync.quickstart
+package com.medisync.quickstart.utilities
 import monix.newtypes._
 import scala.util.Try
 
