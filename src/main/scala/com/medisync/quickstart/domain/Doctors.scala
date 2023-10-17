@@ -28,11 +28,15 @@ object Doctors:
 
   type DoctorId = DoctorId.Type
   object DoctorId
-      extends NewtypeWrapped[Int]
+      extends NewtypeWrapped[String]
       with DerivedCirceCodec
       with DerivedDoobieCodec
       with DerivedHttp4sParamCodec
+      
+
   given KeyEncoder[DoctorId] = (key: DoctorId) => key.toString()
+  given RouteUnapplicable[DoctorId] = new RouteUnapplicable[DoctorId]:
+    def unapply(value: String) = Try(DoctorId(value)).toOption
 
   type DoctorAvailabilityId = DoctorAvailabilityId.Type
   object DoctorAvailabilityId
@@ -68,6 +72,8 @@ object Doctors:
     override def toString(): String = str
 
   object Specialty:
+    def fromString(str: String): Option[Specialty] =
+      Specialty.values.find(_.str == str)
     given RouteUnapplicable[Specialty] = new RouteUnapplicable[Specialty]:
       def unapply(value: String) = Try(Specialty.valueOf(value)).toOption
 

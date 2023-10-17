@@ -38,6 +38,13 @@ trait AvailabilityRepository[F[_]]:
       blockId: BlockId
   ): F[Boolean]
 
+  def canRemoveFromAvailability(
+      docId: DoctorId,
+      specialty: Specialty,
+      date: LocalDate,
+      blockId: BlockId
+  ): F[Boolean]
+
 object AvailabilityRepository:
   def apply[F[_]](implicit avRep: AvailabilityRepository[F]) = avRep
 
@@ -214,4 +221,5 @@ object AvailabilityRepository:
 
         for {
           n <- select.query[Int].unique.transact(T)
+          _ = println(s"hasAppointment: $n")
         } yield n == 0

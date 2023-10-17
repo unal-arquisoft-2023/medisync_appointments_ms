@@ -35,6 +35,7 @@ trait AppointmentService[F[_]]:
   def findAllByPatient(patId: PatientId): F[List[AppointmentRecord]]
   def findOne(apId: AppointmentId): F[Option[AppointmentRecord]]
   def findAllByDoctor(docId: DoctorId): F[List[AppointmentRecord]]
+  def findAllBySpecialty(spe: Specialty): F[List[AvailableAppointment]]
 
   def updateMissed: F[Int]
 
@@ -55,8 +56,11 @@ object AppointmentService:
       ): F[AppointmentId] =
         for {
           hasAppointment <- avRep.hasAppointment(docId,specialty,date,blockId)
+          _ = println("here")
           _ <- Async[F].raiseWhen(hasAppointment)(Exception("That appointment is already booked"))
+          _ = println("here2")
           medRecId <- gw.createMedicalRecord
+          _ = println("here2")
           ap <- apRep.bookAppointment(
             patId,
             docId,
@@ -89,10 +93,16 @@ object AppointmentService:
         } yield r
 
 
+
       def updateMissed: F[Int] = ???
       // update = sql"UPDATE appointments SET staus = ${AppointmentsStatus.Missed} WHERE "
 
       def findAllByDoctor(docId: DoctorId): F[List[AppointmentRecord]] = 
         for {
           r <- apRep.getManyFromDoctor(docId)
+        } yield r
+
+      def findAllBySpecialty(spe: Specialty): F[List[AvailableAppointment]] = 
+        for {
+          r <- apRep.getManyAvailableFromSpecialty(spe)
         } yield r

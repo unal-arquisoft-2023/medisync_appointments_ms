@@ -24,6 +24,7 @@ import com.medisync.quickstart.utilities.NewtypesRouteVar.Var
 import cats.data.EitherT
 import cats.data.OptionT
 import com.medisync.quickstart.utilities.NewtypesRouteVar
+import org.http4s.ParseFailure
 
 object AppointmentController:
 
@@ -38,6 +39,12 @@ object AppointmentController:
   object DoctorIdQueryParam
       extends QueryParamDecoderMatcher[DoctorId]("doctor_id")
 
+  implicit val specialtyQueryParamDecoder: QueryParamDecoder[Specialty] =
+    QueryParamDecoder[String].emap(Specialty.fromString(_).toRight(ParseFailure("Invalid specialty", "Invalid specialty")))
+
+  object SpecialtyQueryParam
+      extends QueryParamDecoderMatcher[Specialty]("specialty")
+
   def apply[F[_]: Concurrent](apService: AppointmentService[F]): HttpRoutes[F] =
     val dsl = new Http4sDsl[F] {}
     import dsl._
@@ -46,6 +53,7 @@ object AppointmentController:
       case req @ POST -> Root / "appointment" => 
         for {
           dto <- req.as[CreateAppointmentDTO]
+          _ = println(dto)
           apId <- apService.create(dto.patientId, dto.doctorId, dto.date, dto.specialty, dto.blockId)
           res <- Status.Created(json"""{"appointment_id": $apId}""")
         } yield res
@@ -110,5 +118,23 @@ object AppointmentController:
             if statusVal.isRight then apService.attend(appId) else false.pure[F]
           res <- statusVal.merge
         } yield res
+
+      case GET -> Root / "appointments" :? PatientIdQueryParam(
+            patId
+        ) =>
+
+        for {
+          apps <- apService.findAllByPatient(patId)
+          res <- Ok(apps.asJson)
+        } yield res
+
+      case GET -> Root / "appointments"  :? SpecialtyQueryParam(
+            spe
+        ) =>
+
+        for {
+          apps <- apService.findAllBySpecialty(spe)
+          res <- Ok(apps.asJson)
+        } yield res         
 
     }

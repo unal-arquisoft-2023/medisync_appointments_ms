@@ -57,7 +57,7 @@ object Appointments:
 
   type PatientId = PatientId.Type
   object PatientId
-      extends NewtypeWrapped[Int]
+      extends NewtypeWrapped[String]
       with DerivedCirceCodec
       with DerivedDoobieCodec
       with DerivedHttp4sParamCodec
@@ -176,6 +176,44 @@ object Appointments:
           app.specialty
         )
       )
+
+  case class AvailableAppointment(
+    date: LocalDate,
+    block: TimeBlock,
+    doctorId: DoctorId,
+  )
+
+  object AvailableAppointment:
+    given Encoder[AvailableAppointment] = new Encoder[AvailableAppointment]:
+      final def apply(app: AvailableAppointment): Json = Json.obj(
+        ("date", app.date.asJson),
+        ("block", app.block.asJson),
+        ("doctor_id", app.doctorId.asJson),
+      )
+    
+    given Read[AvailableAppointment] =
+      Read[
+        (
+            LocalDate,
+            BlockId,
+            DoctorId,
+            LocalTime,
+            LocalTime
+        )
+      ].map {
+        case (
+              date,
+              blockId,
+              doctorId,
+              startTime,
+              endTime
+            ) =>
+          AvailableAppointment(
+            date,
+            TimeBlock(blockId, startTime, endTime),
+            doctorId
+          )
+      }
 
   case class Appointment(
       id: AppointmentId,

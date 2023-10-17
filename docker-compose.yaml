@@ -3,7 +3,7 @@ version: "3.8"
 services:
   appointments_ms:
     container_name: appointments_ms 
-    image: appointments_ms 
+    image: appointments_ms_img 
     build:
       context: .
       target: appointment_ms

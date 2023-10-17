@@ -29,7 +29,7 @@ CREATE TYPE specialty_enum AS enum(
 
 CREATE TABLE doctor_availability (
   id SERIAL NOT NULL PRIMARY KEY,
-  doctor_id INT NOT NULL,
+  doctor_id VARCHAR NOT NULL,
   specialty specialty_enum NOT NULL,
   availability_date DATE NOT NULL,
   start_time TIME,
@@ -64,8 +64,8 @@ CREATE TABLE appointment (
   id SERIAL NOT NULL PRIMARY KEY,
   appointment_date DATE NOT NULL,
   block_time_id INT REFERENCES availability_time_block(id),
-  doctor_id INT NOT NULL,
-  patient_id INT NOT NULL,
+  doctor_id VARCHAR NOT NULL,
+  patient_id VARCHAR NOT NULL,
   medical_record_id INT NOT NULL,
   scheduled_timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
   notification_status notification_status_enum NOT NULL,

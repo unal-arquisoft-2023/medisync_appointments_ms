@@ -31,6 +31,7 @@ trait AppointmentRepository[F[_]]:
 
   def getManyFromPatient(id: PatientId): F[List[AppointmentRecord]]
   def getManyFromDoctor(id: DoctorId): F[List[AppointmentRecord]]
+  def getManyAvailableFromSpecialty(spe: Specialty): F[List[AvailableAppointment]]
   def findOne(id: AppointmentId): F[Option[AppointmentRecord]]
 
 object AppointmentRepository:
@@ -123,6 +124,7 @@ object AppointmentRepository:
           ap <- select.query[AppointmentRecord].to[List].transact(T)
         } yield ap
 
+
       
       def getManyFromDoctor(id: DoctorId): F[List[AppointmentRecord]] =
         val select = sql"""
@@ -144,6 +146,24 @@ object AppointmentRepository:
           ap <- select.query[AppointmentRecord].to[List].transact(T)
         } yield ap
 
+
+      def getManyAvailableFromSpecialty(spe: Specialty): F[List[AvailableAppointment]] = 
+        val select = sql"""
+          SELECT
+            availability_date,
+            block_time_id,
+            doctor_id,
+            start_time_block,
+            end_time_block
+          FROM general_schedule
+          WHERE appointment_id IS NULL
+          AND specialty = ${spe}
+        """
+        for {
+          ap <- select.query[AvailableAppointment].to[List].transact(T)
+        } yield ap
+
+
       def findOne(id: AppointmentId): F[Option[AppointmentRecord]] =
         val select = sql"""
           SELECT
@@ -163,4 +183,6 @@ object AppointmentRepository:
         for {
           ap <- select.query[AppointmentRecord].option.transact(T)
         } yield ap
+
+
 
