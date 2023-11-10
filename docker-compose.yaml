@@ -8,12 +8,19 @@ services:
       context: .
       target: appointment_ms
       dockerfile: ./Dockerfile
+    environment:
+      - PORT=8081
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password
+      - DB_NAME=medisyncdb
     ports:
       - 8081:8081
     networks:
       - appriceit-network
-    links:
-      - "db:db"
+    depends_on:
+      - db
     restart: unless-stopped
 
   db:
@@ -28,4 +35,4 @@ services:
       - appriceit-network
 
 networks:
-  appriceit-network:
+  medisync-appointments-network:
