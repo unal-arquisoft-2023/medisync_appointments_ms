@@ -8,15 +8,20 @@ val FlywayVersion = "9.22.2"
 val MonixNewtypesVersion = "0.2.3"
 val CirceVersion = "0.14.5"
 val SpireVersion = "0.18.0"
-assembly / assemblyMergeStrategy := {
-  case PathList("META-INF", xs @ _*) => MergeStrategy.first   
-  case x =>
+// assembly / assemblyMergeStrategy := {
+//   case PathList("META-INF", xs @ _*) => MergeStrategy.first   
+//   case x =>
+//         val oldStrategy = (assembly / assemblyMergeStrategy).value
+//         oldStrategy(x)
+// }
+ assembly / assemblyMergeStrategy := {
+      case PathList("module-info.class")                                 => MergeStrategy.discard
+      case PathList("META-INF", "versions", xs @ _, "module-info.class") => MergeStrategy.discard
+      case x =>
         val oldStrategy = (assembly / assemblyMergeStrategy).value
         oldStrategy(x)
-}
-// ThisBuild / assemblyShadeRules := Seq(
-//   ShadeRule.rename("com.fasterxml.core.**" -> "shadeio.@1").inAll
-// )
+    }
+
 
 lazy val root = (project in file("."))
   .settings(
@@ -56,5 +61,8 @@ lazy val root = (project in file("."))
       "org.typelevel" %% "spire-extras" % SpireVersion,
 
     ),
-    testFrameworks += new TestFramework("munit.Framework")
+    testFrameworks += new TestFramework("munit.Framework"),
+
+    assembly / mainClass := Some("com.medisync.quickstart.Main"),
+    assembly / assemblyJarName := "appointments.jar"
   )
