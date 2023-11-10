@@ -18,7 +18,7 @@ services:
     ports:
       - 8081:8081
     networks:
-      - appriceit-network
+      - medisync-appointments-network
     depends_on:
       - db
     restart: unless-stopped
@@ -32,7 +32,8 @@ services:
     ports:
       - 5432:5432
     networks:
-      - appriceit-network
+      - medisync-appointments-network
+
 
 networks:
   medisync-appointments-network:
