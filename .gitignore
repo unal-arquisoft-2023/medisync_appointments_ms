@@ -8,3 +8,4 @@
 /.bsp/
 /.bloop/
 .scala-build/.bloop/quickstart_103be31561.json
+.env
