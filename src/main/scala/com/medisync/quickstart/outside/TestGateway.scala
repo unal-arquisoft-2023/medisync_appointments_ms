@@ -2,10 +2,7 @@ package com.medisync.quickstart.outside
 
 import org.http4s.client.Client
 import cats.effect.Concurrent
-import cats.effect.implicits._
-import java.time.Instant
 import com.medisync.quickstart.domain.Appointments._
-import scala.util.Random
 
 
 object TestGateway:

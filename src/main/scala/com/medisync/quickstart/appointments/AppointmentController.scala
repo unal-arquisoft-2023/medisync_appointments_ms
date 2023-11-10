@@ -6,23 +6,19 @@ import org.http4s.{Request, Response}
 import org.http4s.Status
 import org.http4s.QueryParamDecoder
 import org.http4s.QueryParamCodec
-import org.http4s.dsl.impl.+&
 import org.http4s.dsl.impl.QueryParamDecoderMatcher
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import org.http4s.circe._
 import cats.effect.Concurrent
 import cats.implicits._
-import cats.syntax._
 import io.circe._
 import io.circe.syntax._
 import io.circe.literal._
-import CreateAppointmentDTO._
 import com.medisync.quickstart.domain.Appointments._
 import com.medisync.quickstart.domain.Doctors._
 import com.medisync.quickstart.utilities.NewtypesRouteVar.Var
 import cats.data.EitherT
-import cats.data.OptionT
 import com.medisync.quickstart.utilities.NewtypesRouteVar
 import org.http4s.ParseFailure
 
@@ -48,7 +44,6 @@ object AppointmentController:
   def apply[F[_]: Concurrent](apService: AppointmentService[F]): HttpRoutes[F] =
     val dsl = new Http4sDsl[F] {}
     import dsl._
-    import AppointmentService._
     HttpRoutes.of[F] {
       case req @ POST -> Root / "appointment" => 
         for {

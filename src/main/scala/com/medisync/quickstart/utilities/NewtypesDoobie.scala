@@ -3,7 +3,6 @@ package com.medisync.quickstart.utilities
 import cats.Show
 import monix.newtypes.*
 import doobie.{Get, Put}
-import doobie.implicits._
 
 object NewtypesDoobie:
   trait DerivedDoobieCodec:

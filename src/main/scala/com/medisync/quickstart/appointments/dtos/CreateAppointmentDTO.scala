@@ -2,8 +2,7 @@ package com.medisync.quickstart.appointment
 
 import com.medisync.quickstart.domain.Appointments._
 import com.medisync.quickstart.domain.Doctors._
-import java.time.Instant
-import io.circe.{Decoder, Encoder}
+import io.circe.Decoder
 import org.http4s.EntityDecoder
 import org.http4s.circe._
 import cats.effect.Concurrent

@@ -8,11 +8,8 @@ import io.circe._
 import io.circe.syntax._
 import scala.util.Try
 import doobie._
-import doobie.implicits._
-import doobie.implicits.javasql._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import doobie.enumerated.JdbcType.Time
 import java.time.LocalDate
 import java.time.LocalTime
 import com.medisync.quickstart.utilities.{
@@ -21,7 +18,6 @@ import com.medisync.quickstart.utilities.{
   NewtypesRouteVar
 }
 import com.medisync.quickstart.utilities.TimeIntervals._
-import com.medisync.quickstart.utilities.TimeIntervals.given
 import com.medisync.quickstart.domain.Appointments.BlockId
 
 object Doctors:

@@ -10,14 +10,10 @@ import Doctors._
 
 import cats.Show
 
-import scala.util.Try
 
 import doobie._
-import doobie.implicits._
-import doobie.implicits.javasql._
 import doobie.postgres._
 import doobie.postgres.implicits._
-import org.http4s.CacheDirective.public
 import io.circe._
 import io.circe.syntax._
 import java.time.LocalDate

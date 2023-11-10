@@ -1,22 +1,8 @@
 package com.medisync.quickstart.appointment
 
-import java.time.Instant
 import cats.effect.Async
 import cats.implicits._
-import io.circe.{Encoder, Decoder}
-import org.http4s._
-import org.http4s.implicits._
-import org.http4s.client.Client
-import org.http4s.client.dsl.Http4sClientDsl
-import org.http4s.circe._
-import org.http4s.Method._
-import doobie._
-import doobie.implicits._
-import doobie.implicits.javasql._
-import doobie.postgres._
-import doobie.postgres.implicits._
-import doobie.postgres.pgisimplicits._
-import java.time.{LocalDate, LocalTime}
+import java.time.LocalDate
 import com.medisync.quickstart.domain.Appointments._
 import com.medisync.quickstart.domain.Doctors._
 import com.medisync.quickstart.outside.Gateway
@@ -45,8 +31,6 @@ object AppointmentService:
 
   def impl[F[_]: Async](apRep: AppointmentRepository[F], avRep: AvailabilityRepository[F], gw: Gateway[F]) =
     new AppointmentService[F]:
-      val dsl = new Http4sClientDsl[F] {}
-      import dsl._
       def create(
           patId: PatientId,
           docId: DoctorId,

@@ -7,39 +7,12 @@ import org.http4s.ember.client.EmberClientBuilder
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.implicits._
 import org.http4s.server.middleware.Logger
-import org.http4s.server.middleware.ErrorAction
-import org.http4s.server.middleware.ErrorHandling
-import pureconfig.ConfigSource
-import cats.effect.kernel.ResourceAsync
-import com.medisync.quickstart.Configuration.ServiceConf
 
-import doobie._
-import doobie.implicits._
 import com.medisync.quickstart.outside.TestGateway
 import com.medisync.quickstart.availability.{AvailabilityRepository, AvailabilityController, AvailabilityService}
 
-import domain.Doctors._
-import java.time.{LocalDate, LocalTime}
-import spire.math.extras.interval.IntervalSeq
-import utilities.TimeIntervals.given
-import utilities.TimeIntervals._
 import cats.data.OptionT
-import cats.syntax.all._
-import com.medisync.quickstart.domain.Appointments._
-import io.circe._
-import io.circe.syntax._
-import io.circe.literal._
-import cats.effect.kernel.syntax.async
-import cats.effect.std.Console
-import cats.effect.Sync
-import com.medisync.quickstart.availability.CreateDoctorAvailabilityDTO
-import com.medisync.quickstart.availability.CreateDoctorAvailabilityDTO.given
 import com.medisync.quickstart.appointment.{AppointmentRepository, AppointmentController, AppointmentService}
-import com.medisync.quickstart.domain.Appointments.PatientId
-import com.medisync.quickstart.domain.Appointments.MedicalRecordId
-import org.http4s.HttpRoutes
-import cats.ApplicativeThrow
-import cats.effect.kernel.MonadCancel
 
 object QuickstartServer:
 

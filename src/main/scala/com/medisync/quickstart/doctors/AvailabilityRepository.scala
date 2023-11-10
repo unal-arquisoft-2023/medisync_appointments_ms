@@ -7,16 +7,13 @@ import com.medisync.quickstart.utilities.TimeIntervals._
 import com.medisync.quickstart.utilities.TimeIntervals.given
 import com.medisync.quickstart.domain.Doctors._
 import com.medisync.quickstart.domain.Doctors.given
-import javax.print.Doc
 import cats.effect.kernel.Async
-import cats.effect.kernel.Sync
 import cats.syntax.all._
 import doobie.util.transactor.Transactor
 import spire.math.extras.interval.IntervalSeq
 import java.time.LocalTime
 import doobie._
 import doobie.implicits._
-import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 import com.medisync.quickstart.domain.Appointments.BlockId
 

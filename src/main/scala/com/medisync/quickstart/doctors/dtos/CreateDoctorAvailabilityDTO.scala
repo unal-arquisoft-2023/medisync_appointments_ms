@@ -7,7 +7,6 @@ import io.circe.Decoder
 import org.http4s.EntityDecoder
 import org.http4s.circe._
 import cats.effect.Concurrent
-import ch.qos.logback.core.encoder.Encoder
 
 final case class CreateDoctorAvailabilityDTO(
     date: LocalDate,

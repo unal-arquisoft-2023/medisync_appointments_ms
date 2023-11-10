@@ -5,11 +5,9 @@ import cats.effect.kernel.Async
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
 import cats.effect.Resource
-import cats.syntax._
 import org.flywaydb.core.Flyway
 import cats.effect.kernel.Sync
 import doobie.util.log._
-import cats.effect.LiftIO
 
 object Database {
   def logHandler[F[_]: Async] = 

@@ -4,32 +4,16 @@ import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{Request, Response}
 import org.http4s.Status
-import org.http4s.QueryParamDecoder
-import org.http4s.QueryParamCodec
-import org.http4s.dsl.impl.+&
-import org.http4s.dsl.impl.QueryParamDecoderMatcher
-import java.time.Instant
-import java.time.format.DateTimeFormatter
 import org.http4s.circe._
 import cats.effect.Concurrent
 import cats.implicits._
-import cats.syntax._
 import io.circe._
 import io.circe.parser.decode
 import io.circe.syntax._
-import io.circe.literal._
 import com.medisync.quickstart.domain.Doctors._
 import com.medisync.quickstart.utilities.NewtypesRouteVar._
-import cats.data.EitherT
-import cats.data.OptionT
 import com.medisync.quickstart.utilities.NewtypesRouteVar
-import java.time.LocalDate
 import com.medisync.quickstart.utilities.TimeIntervals._
-import com.medisync.quickstart.utilities.TimeIntervals.given
-import java.time.LocalTime
-import cats.data.Kleisli
-import spire.math.extras.interval.IntervalSeq
-import io.circe.Parser
 import com.medisync.quickstart.domain.Appointments.BlockId
 
 object AvailabilityController:

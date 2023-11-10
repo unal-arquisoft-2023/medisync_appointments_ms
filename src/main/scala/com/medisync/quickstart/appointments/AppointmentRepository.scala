@@ -8,7 +8,6 @@ import cats.effect.kernel.Async
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
-import doobie.implicits.javasql._
 import doobie.postgres.implicits._
 
 trait AppointmentRepository[F[_]]:
